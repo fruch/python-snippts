@@ -725,11 +725,56 @@ def ParsePacket_No_TS_Header( packet_byte_array ):
 	parse_SAD_PAYLOAD(bs, packet_byte_array)
 	log.debug( "Parsing End !!!!")
 	return (bs, packet_byte_array)
+import unittest
 
+
+class XmlTestRunnerTest(unittest.TestCase):
+	def setUp(self): pass
+	def testDavidPacket(self):
+		# david packet
+		data = array.array('B', HexToByte("000001bd008b8c80052100010001810021050801000101113e80008106030000000000820d80c300000bb801010401020304005711ffffffffff018000000001020000000000ffffffffff 13 01000f01001400020100020402000100080006 01000000000102ee0000000000ffffffffff13 01000f0100140002010002040200010008000601000000000102ee00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
+		(bs, data) = ParsePacket_No_TS_Header(data)
+		print bs
+	def testStreamPacket(self):
+		# stream packet
+		data = array.array('B', HexToByte("000001bd002e8180052b925721bd860021050801000178d17f88008106c3001323d400820d9fc3000002ee010104000000010000"))
+
+		(bs, data) = ParsePacket_No_TS_Header(data)
+		print bs
+	def testMyPacket(self):
+		# my packet
+		data = array.array('B', HexToByte("000001BD003D8C80052100010001810021050801000101113E80008106110000000000820DA0D100000BB8010104010203040007110000000000000000000000000000"))
+		
+		(bs, data) = ParsePacket_No_TS_Header(data)
+		print bs
+	def testMJD_UTC_Convertion(self):
+		#test mjd + utc convertion
+		test_data = array.array('B',HexToByte("D641 10 29 40"))
+		res = DVB_MJD_to_string(None ,  test_data )
+		self.assertEqual( "18/1/2009 10:29:40 ", str(res))
+		
+		#unlimited
+		test_data = array.array('B',HexToByte("FFFFFFFFFF"))
+		res = DVB_MJD_to_string(None ,  test_data )
+		self.assertEqual( "Unlimited", str(res))
+		
+		#wrong size
+		test_data = array.array('B',HexToByte("FFFFFFFF"))
+		res = DVB_MJD_to_string(None ,  test_data )
+		self.assertEqual( "Didn't parse", str(res))
+		
+	def testProfileByte_Convertion(self):
+		#test profile byte convertion
+		test_data = array.array('B', HexToByte("01 000f 01 0014 00 02 01 0002 04 02 00 01 00 08 00 06"))
+		test_bs = BitStructureExt('TEST')
+		test_bs.set_array(test_data)
+		self.assertEqual( 19 ,  len( test_data ) )
+		self.assertEqual('!( ( ( A15 < A20 ) and ( A2 == 2 ) ) )', 
+			ProfileByte_to_string(test_bs, len( test_data ), test_data))
 def main():
     
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ho:t:i:v", ["help", "output=", "test=", "input="])
+		opts, args = getopt.getopt(sys.argv[1:], "ho:ti:v", ["help", "output=", "test", "input="])
 	except getopt.GetoptError, err:
         #print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -739,7 +784,7 @@ def main():
 	output = None
 	verbose = False
 	verbose_level = None
-	testing = 0 # unit testing off
+	testing = False
 	input_filename = None
 	
 	for opt, param in opts:
@@ -753,7 +798,7 @@ def main():
 		elif opt in ("-i", "--input"):
 			input_filename = param
 		elif opt in ("-t", "--test"):
-			testing = param
+			testing = True
 		else:
 			assert False, "unhandled option"
 
@@ -779,35 +824,12 @@ def main():
 	data = None
 	# TEST PACKET
 	
-	if (testing == "1"):
-		# david packet
-		data = array.array('B', HexToByte("000001bd008b8c80052100010001810021050801000101113e80008106030000000000820d80c300000bb801010401020304005711ffffffffff018000000001020000000000ffffffffff 13 01000f01001400020100020402000100080006 01000000000102ee0000000000ffffffffff13 01000f0100140002010002040200010008000601000000000102ee00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
-	elif (testing == "2"):
-		# stream packet
-		data = array.array('B', HexToByte("000001bd002e8180052b925721bd860021050801000178d17f88008106c3001323d400820d9fc3000002ee010104000000010000"))
-	elif (testing == "3"):
-		# my packet
-		data = array.array('B', HexToByte("000001BD003D8C80052100010001810021050801000101113E80008106110000000000820DA0D100000BB8010104010203040007110000000000000000000000000000"))
-	elif (testing == "4"):
-		#test mjd + utc convertion
-		test_data = array.array('B',HexToByte("D641 10 29 40"))
-		print (DVB_MJD_to_string(None ,  test_data ))
+	if (testing):
+		from xmlrunner import XmlTestRunner
+		runner = XmlTestRunner()
+		runner.run(unittest.makeSuite(XmlTestRunnerTest))
+		sys.exit()
 		
-		#unlimited
-		test_data = array.array('B',HexToByte("FFFFFFFFFF"))
-		print (DVB_MJD_to_string(None ,  test_data ))
-		
-		#wrong size
-		test_data = array.array('B',HexToByte("FFFFFFFF"))
-		print (DVB_MJD_to_string(None ,  test_data ))
-		
-	elif (testing == "5"):
-		#test profile byte convertion
-		test_data = array.array('B', HexToByte("01 000f 01 0014 00 02 01 0002 04 02 00 01 00 08 00 06"))
-		test_bs = BitStructureExt('TEST')
-		test_bs.set_array(test_data)
-		print len( test_data )
-		print (ProfileByte_to_string(test_bs, len( test_data ), test_data))
 	# open a file 
 	if(input_filename != None):
 		try:
