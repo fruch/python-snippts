@@ -74,7 +74,7 @@ class BitStructureExt(BitStructure):
             s += '(%s = - %s -' % (self._name, self.desc)
         else:
             s += '(%s = ' % self._name
-        for field in self._BitStructure__fields:
+        for field in self.__fields:
             s += '\n'
             s += field.__str__(indent + 3)
         s += ')'
@@ -753,8 +753,8 @@ class BitGamesTest(unittest.TestCase):
         raise "execption test"
         self.assertEqual('',
             ProfileByte_to_string(test_bs, len( test_data ), test_data))
-def main():
-
+def handle_args():
+    ''' handle command line arg '''
     try:
         opts, args = getopt.getopt(sys.argv[1:], "ho:ti:v", ["help", "output=", "test", "input="])
     except getopt.GetoptError, err:
@@ -762,75 +762,78 @@ def main():
         print str(err) # will print something like "option -a not recognized"
         usage()
         sys.exit(2)
-
-    output = None
-    verbose = False
-    verbose_level = None
-    testing = False
-    input_filename = None
+    params = {}
+    params['output'] = None
+    params['verbose'] = False
+    params['verbose_level'] = None
+    params['testing'] = False
+    params['input_filename'] = None
 
     for opt, param in opts:
         if opt == "-v":
-            verbose = True
+            params['verbose'] = True
         elif opt in ("-h", "--help"):
             usage()
             sys.exit()
         elif opt in ("-o", "--output"):
-            output = param
+            params['output'] = param
         elif opt in ("-i", "--input"):
-            input_filename = param
+            params['input_filename'] = param
         elif opt in ("-t", "--test"):
-            testing = True
+            params['testing'] = True
         else:
             assert False, "unhandled option"
-
+    return params
+def configure_debug(params):
     # set debug level
-    if (verbose):
+    if (params['verbose']):
         verbose_level = logging.DEBUG
     else:
         verbose_level = logging.INFO
     # Log everything, and send it to stderr.
-    # create logger
-    log = logging.getLogger("simple_example")
     LOG.setLevel(verbose_level)
     # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(verbose_level)
+    con_handler = logging.StreamHandler()
+    con_handler.setLevel(verbose_level)
     # create formatter
     formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-    # add formatter to ch
-    ch.setFormatter(formatter)
-    # add ch to logger
-    LOG.addHandler(ch)
+    # add formatter to con_handler
+    con_handler.setFormatter(formatter)
+    # add con_handler to logger
+    LOG.addHandler(con_handler)
 
+def main():
+    '''main function'''
+    params = handle_args()
+    configure_debug(params)
     data = None
     # TEST PACKET
 
-    if (testing):
+    if (params['testing']):
         from xmlrunner import XmlTestRunner
         runner = XmlTestRunner()
         runner.run(unittest.makeSuite(BitGamesTest))
         sys.exit()
 
     # open a file
-    if(input_filename != None):
+    if(params['input_filename'] != None):
         try:
-            file = open(input_filename)
+            data_file = open(params['input_filename'])
         except IOError, err:
             print err
             sys.exit(2)
 
-        data = array.array('B', hex_to_byte(file.readline()))
+        data = array.array('B', hex_to_byte(data_file.readline()))
 
     if (data == None):
         print "No data input !!!"
         usage()
         sys.exit(2)
 
-    (bs, data) = ParsePacket_No_TS_Header(data)
+    (bits, data) = ParsePacket_No_TS_Header(data)
 
-    print bs
-    print str(bs.xml())
+    print bits
+    print str(bits.xml())
     print byte_to_hex(data.tostring())
 
 if __name__ == "__main__":
