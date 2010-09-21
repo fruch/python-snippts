@@ -728,7 +728,7 @@ def ParsePacket_No_TS_Header( packet_byte_array ):
 import unittest
 
 
-class XmlTestRunnerTest(unittest.TestCase):
+class BitGamesTest(unittest.TestCase):
 	def setUp(self): pass
 	def testDavidPacket(self):
 		# david packet
@@ -770,6 +770,20 @@ class XmlTestRunnerTest(unittest.TestCase):
 		test_bs.set_array(test_data)
 		self.assertEqual( 19 ,  len( test_data ) )
 		self.assertEqual('!( ( ( A15 < A20 ) and ( A2 == 2 ) ) )', 
+			ProfileByte_to_string(test_bs, len( test_data ), test_data))
+			
+	def testFailure_Convertion(self):
+		#test profile byte convertion
+		test_data = array.array('B', HexToByte("01 000f 01 0014 00 02 01 0002 04 02 00 01 00 08 00 06"))
+		test_bs = BitStructureExt('TEST')
+		test_bs.set_array(test_data)
+		self.assertEqual( 19 ,  len( test_data ) )
+		self.assertEqual('', 
+			ProfileByte_to_string(test_bs, len( test_data ), test_data))
+			
+	def testExecption_Convertion(self):
+		raise "execption test"
+		self.assertEqual('', 
 			ProfileByte_to_string(test_bs, len( test_data ), test_data))
 def main():
     
@@ -827,7 +841,7 @@ def main():
 	if (testing):
 		from xmlrunner import XmlTestRunner
 		runner = XmlTestRunner()
-		runner.run(unittest.makeSuite(XmlTestRunnerTest))
+		runner.run(unittest.makeSuite(BitGamesTest))
 		sys.exit()
 		
 	# open a file 
