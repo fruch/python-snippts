@@ -54,7 +54,7 @@ class BitStructureExt(BitStructure):
             s += '<BitStructure name="%s" desc="%s"' % (self._name, self.desc)
         else:
             s += '<BitStructure name="%s"' % self._name
-        for field in self.__fields:
+        for field in self._BitStructure__fields:
             s += '\n'
             s += field.xml(indent + 3)
         s += '\n'
@@ -74,7 +74,7 @@ class BitStructureExt(BitStructure):
             s += '(%s = - %s -' % (self._name, self.desc)
         else:
             s += '(%s = ' % self._name
-        for field in self.__fields:
+        for field in self._BitStructure__fields:
             s += '\n'
             s += field.__str__(indent + 3)
         s += ')'
@@ -740,19 +740,6 @@ class BitGamesTest(unittest.TestCase):
         self.assertEqual('!( ( ( A15 < A20 ) and ( A2 == 2 ) ) )',
             ProfileByte_to_string(test_bs, len( test_data ), test_data))
 
-    def testFailure_Convertion(self):
-        #test profile byte convertion
-        test_data = array.array('B', hex_to_byte("01 000f 01 0014 00 02 01 0002 04 02 00 01 00 08 00 06"))
-        test_bs = BitStructureExt('TEST')
-        test_bs.set_array(test_data)
-        self.assertEqual( 19 ,  len( test_data ) )
-        self.assertEqual('',
-            ProfileByte_to_string(test_bs, len( test_data ), test_data))
-
-    def testExecption_Convertion(self):
-        raise "execption test"
-        self.assertEqual('',
-            ProfileByte_to_string(test_bs, len( test_data ), test_data))
 def handle_args():
     ''' handle command line arg '''
     try:
