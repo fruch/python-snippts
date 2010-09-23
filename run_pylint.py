@@ -1,5 +1,5 @@
 import sys
 import pylint.lint
-args = ['bitgames.py','-f', 'parseable','--max-line-length=120', '--files-output=y']
+args = ['bitgames.py', '--rcfile=pylint_rc']
 
 pylint.lint.Run(args, exit=False)

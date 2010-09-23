@@ -24,7 +24,7 @@ __author__  = "Israel Fruchter (israel.fruchter@gmail.com)"
 __date__    = '2009-Jun-15'
 __copyright__ = "(C) 2009 Israel Fruchter. GNU GPL 3."
 
-info = '''
+__info__ = '''
     Version: ''' + __version__ + '''
 
     Author: ''' + __author__ + '''
@@ -40,6 +40,7 @@ from BitPacket import BitStructure, BitField, array, BYTE_SIZE, BIT_SIZE
 
 
 class BitStructureExt(BitStructure):
+    ''' BitStructure Extension that add support for xml output'''
     desc = None
     def __init__(self, *arg, **karg):
         BitStructure.__init__(self, *arg, **karg)
@@ -47,40 +48,38 @@ class BitStructureExt(BitStructure):
         '''
         Returns a human-readable representation xml of the structure.
         '''
-        s = ''
-        for i in range(indent):
-            s += ' '
+        output = ''
+        output += ' ' * indent
         if (self.desc != None):
-            s += '<BitStructure name="%s" desc="%s"' % (self._name, self.desc)
+            output += '<BitStructure name="%s" desc="%s"' % (self._name, self.desc)
         else:
-            s += '<BitStructure name="%s"' % self._name
+            output += '<BitStructure name="%s"' % self._name
         for field in self._BitStructure__fields:
-            s += '\n'
-            s += field.xml(indent + 3)
-        s += '\n'
-        for i in range(indent):
-            s += ' '
-        s += '</BitStructure>'
-        return s
+            output += '\n'
+            output += field.xml(indent + 3)
+        output += '\n'
+        output += ' ' * indent
+        output += '</BitStructure>'
+        return output
 
     def __str__(self, indent = 0):
         '''
         Returns a human-readable representation of the structure.
         '''
-        s = ''
-        for i in range(indent):
-            s += ' '
+        output = ''
+        output += ' ' * indent
         if (self.desc != None):
-            s += '(%s = - %s -' % (self._name, self.desc)
+            output += '(%s = - %s -' % (self._name, self.desc)
         else:
-            s += '(%s = ' % self._name
+            output += '(%s = ' % self._name
         for field in self._BitStructure__fields:
-            s += '\n'
-            s += field.__str__(indent + 3)
-        s += ')'
-        return s
+            output += '\n'
+            output += field.__str__(indent + 3)
+        output += ')'
+        return output
 
 class BitFieldExt(BitField):
+    ''' BitStructure Extension that add support for xml output and description '''
     desc = None
 
     def xml(self, indent = 0):
@@ -88,28 +87,26 @@ class BitFieldExt(BitField):
         Prints the name and value of the field with an optional
         indentation.
         '''
-        s = ""
-        for i in range(indent):
-            s += " "
+        output = ''
+        output += ' ' * indent
         if (self.desc != None):
-            s += '<BitField name="%s"  value="0x%X" desc="%s" />' % (self._name, self.value(), self.desc)
+            output += '<BitField name="%s"  value="0x%X" desc="%s" />' % (self._name, self.value(), self.desc)
         else:
-            s += '<BitField name="%s"  value="0x%X" />' % (self._name, self.value())
-        return s
+            output += '<BitField name="%s"  value="0x%X" />' % (self._name, self.value())
+        return output
 
     def __str__(self, indent = 0):
         '''
         Prints the name and value of the field with an optional
         indentation.
         '''
-        s = ""
-        for i in range(indent):
-            s += " "
+        output = ""
+        output += ' ' * indent
         if (self.desc != None):
-            s += "(%s = 0x%X) - %s -" % (self._name, self.value(), self.desc)
+            output += "(%s = 0x%X) - %s -" % (self._name, self.value(), self.desc)
         else:
-            s += "(%s = 0x%X)" % (self._name, self.value())
-        return s
+            output += "(%s = 0x%X)" % (self._name, self.value())
+        return output
 
 __usage__ = '''
 USAGE:
@@ -148,15 +145,15 @@ def hex_to_byte( hex_str ):
     Convert a string hex byte values into a byte string. The Hex Byte values may
     or may not be space separated.
     '''
-    bytes = []
+    out_bytes = []
 
     hex_str = ''.join( hex_str.split(" ") )
     for i in range(0, len(hex_str), 2):
-        bytes.append( chr( int (hex_str[i:i+2], 16 ) ) )
+        out_bytes.append( chr( int (hex_str[i:i+2], 16 ) ) )
 
-    return ''.join( bytes )
+    return ''.join( out_bytes )
 
-def DVB_MJD_to_string( bit_structure=None , byte_array=None ):
+def dvb_mjd_to_string( bit_structure=None , byte_array=None ):
     '''
     convert 5 byte array to string reprsention time
 
@@ -181,27 +178,31 @@ def DVB_MJD_to_string( bit_structure=None , byte_array=None ):
 
     LOG.debug( byte_to_hex(byte_array.tostring()))
 
-    bs = BitStructureExt('MJD+UTC')
-    bs.append(BitFieldExt('MJD',        BYTE_SIZE * 2))
-    bs.append(BitFieldExt('hours',    BYTE_SIZE * 1))
-    bs.append(BitFieldExt('mins',    BYTE_SIZE * 1))
-    bs.append(BitFieldExt('secs',    BYTE_SIZE * 1))
-    bs.set_array (byte_array)
-    number = bs['MJD']
-    LOG.debug( "DVB_MJD_to_string got MJD: 0x%x" % number)
+    bitstruct = BitStructureExt('MJD+UTC')
+    bitstruct.append(BitFieldExt('MJD',        BYTE_SIZE * 2))
+    bitstruct.append(BitFieldExt('hours',    BYTE_SIZE * 1))
+    bitstruct.append(BitFieldExt('mins',    BYTE_SIZE * 1))
+    bitstruct.append(BitFieldExt('secs',    BYTE_SIZE * 1))
+    bitstruct.set_array (byte_array)
+    number = bitstruct['MJD']
+    LOG.debug( "dvb_mjd_to_string got MJD: 0x%x" % number)
 
-    Y_tag = int((int (number) - 15078.2) / 365.25)
-    M_tag = int( (int (number) - 14956.1 - int (Y_tag * 365.25) ) / 30.6001 )
-    D = int(number) - 14956 - int (Y_tag * 365.25) - int (M_tag * 30.6001 )
+    y_tag = int((int (number) - 15078.2) / 365.25)
+    m_tag = int( (int (number) - 14956.1 - int (y_tag * 365.25) ) / 30.6001 )
+    d = int(number) - 14956 - int (y_tag * 365.25) - int (m_tag * 30.6001 )
 
-    if ((M_tag == 14) or (M_tag == 15)):
-        K = 1
+    if ((m_tag == 14) or (m_tag == 15)):
+        k = 1
     else:
-        K = 0
-    Y = Y_tag + K
-    M = M_tag - 1 - K * 12
+        k = 0
+    y = y_tag + k
+    m = m_tag - 1 - k * 12
 
-    time_string = "%s/%s/%s %x:%x:%x " % (D,M,1900+Y, bs['hours'],bs['mins'],bs['secs'])
+    time_string = "%s/%s/%s %x:%x:%x " % (d, m, 1900+y, 
+        bitstruct['hours'], 
+        bitstruct['mins'], 
+        bitstruct['secs'])
+        
     LOG.debug(time_string)
 
     return time_string
@@ -267,6 +268,38 @@ def parse_PES_START_INFO ( bs_input , data):
 def parse_SAD_PAYLOAD ( bs_input , data):
     '''
     Parsing data into  SAD_PAYLOAD and append it to bs_input (BitStructre)
+
+Substitute_rules_Payload() {
+    version    4
+    availType    4
+    expiryDate    40
+    numSpots    8
+    for(int i=0; i<numSpots; i++) {
+        spotIdFlag    1
+        reserved    7
+        if(spotIdFlag==1) {
+            spotId    32
+        }
+        numSubstitutions    8
+        for(int j=0; j<numSubstitutions; j++) {
+            rule {
+                ruleStartDate    40
+                ruleEndDate    40
+                profileLength    8
+                for(int p=0; p<profileLength; p++) {
+                    profileByte    8
+                }
+            }
+            numAds    8
+            for(int n=0; n<numAds; n++) {
+                reserved    7
+                indirectID    1
+                adID    32
+                duration    16
+            }
+        }
+    }
+}
     '''
     flags = BitStructureExt('SAD_FLAGS')
     flags.append(BitFieldExt('payload_format',  BIT_SIZE * 4))
@@ -282,7 +315,7 @@ def parse_SAD_PAYLOAD ( bs_input , data):
     test = int(bs_input['desc_loop_length'])
     if (test > 0):
         #bs_input.append(BitFieldExt('descriptors', BYTE_SIZE * test ))
-        parse_DESCRIPTORS(bs_input, data, test ,0)
+        parse_DESCRIPTORS(bs_input, data, test , 0)
     else:
         LOG.debug("parse_SAD_PAYLOAD: No descriptors")
 
@@ -324,8 +357,8 @@ def parse_SYNC_EVENT_DESC( bs_input , data, bytes_to_read):
     #    Check if this desc. has data in it, and take it
     sync_event_data_length = bs_input.field('SYNC_EVENT_DESC').field('sync_event_data_length').value()
     if (sync_event_data_length > 0):
-            bs_input.field('SYNC_EVENT_DESC').append(
-                BitFieldExt('sync_event_data_byte',     sync_event_data_length))
+        bs_input.field('SYNC_EVENT_DESC').append(
+            BitFieldExt('sync_event_data_byte',     sync_event_data_length))
 
     #    remove the length of this descriptor
     descriptor_len = bs_input.field('SYNC_EVENT_DESC').field('descriptor_len').value()
@@ -343,11 +376,11 @@ def parse_SPLICE_EVENT_DESC( bs_input , data, bytes_to_read):
     in the descriptor payload
     '''
     desc = BitStructureExt('SPLICE_EVENT_DESC')
-    desc.append(BitFieldExt('descriptor_len',            BYTE_SIZE     * 1    ))
-    desc.append(BitFieldExt('2 Bit reserverd',            BIT_SIZE    * 2 ))
-    desc.append(BitFieldExt('tick_format',                BIT_SIZE    * 6    ))
-    desc.append(BitFieldExt('absolute_ticks',            BYTE_SIZE     * 4    ))
-    desc.append(BitFieldExt('splice_event_data_length',BYTE_SIZE     * 1    ))
+    desc.append(BitFieldExt('descriptor_len',               BYTE_SIZE       * 1 ))
+    desc.append(BitFieldExt('2 Bit reserverd',              BIT_SIZE        * 2 ))
+    desc.append(BitFieldExt('tick_format',                  BIT_SIZE        * 6 ))
+    desc.append(BitFieldExt('absolute_ticks',               BYTE_SIZE       * 4 ))
+    desc.append(BitFieldExt('splice_event_data_length',     BYTE_SIZE       * 1 ))
 
     bs_input.append(desc)
     bs_input.set_array(data)
@@ -355,8 +388,8 @@ def parse_SPLICE_EVENT_DESC( bs_input , data, bytes_to_read):
     #    Check if this desc. has data in it, and take it
     splice_event_data_length = bs_input.field('SPLICE_EVENT_DESC').field('splice_event_data_length').value()
     if (splice_event_data_length > 0):
-            bs_input.field('SPLICE_EVENT_DESC').append(
-                BitFieldExt('splice_event_data_byte',     splice_event_data_length))
+        bs_input.field('SPLICE_EVENT_DESC').append(
+            BitFieldExt('splice_event_data_byte',     splice_event_data_length))
 
     #    remove the length of this descriptor
     descriptor_len = bs_input.field('SPLICE_EVENT_DESC').field('descriptor_len').value()
@@ -377,9 +410,9 @@ def parse_SUBST_AD_DESC( bs_input , data, bytes_to_read):
     bs_input.append(desc)
     bs_input.set_array(data)
 
-    outPoint = bs_input.field('SUBST_AD_DESC').field('outPoint').value()
+    out_point = bs_input.field('SUBST_AD_DESC').field('outPoint').value()
 
-    if(outPoint):
+    if(out_point):
         desc.append(BitFieldExt('auto_return',        BIT_SIZE * 1 ))
         desc.append(BitFieldExt('durationFlag',    BIT_SIZE * 1 ))
         desc.append(BitFieldExt('duration_format',    BIT_SIZE * 6 ))
@@ -396,15 +429,16 @@ def parse_SUBST_AD_DESC( bs_input , data, bytes_to_read):
     desc.append(BitFieldExt('numIds', BYTE_SIZE * 1 ))
 
     bs_input.set_array(data)
-    numIds = desc.field('numIds').value()
+    num_ids = desc.field('numIds').value()
 
-    LOG.debug( "numIds: "+ str(numIds) )
-    for i in range(0, numIds):
-        numIds_bs = BitStructureExt('NUM_ID')
-        numIds_bs.append(BitFieldExt('idType',        BYTE_SIZE * 1    ))
-        numIds_bs.append(BitFieldExt('id_length',    BYTE_SIZE * 1    ))
-        numIds_bs.append(BitFieldExt('id_bytes',    BYTE_SIZE * 4    ))
-        bs_input.field('SUBST_AD_DESC').append(numIds_bs)
+    LOG.debug( "numIds: "+ str(num_ids) )
+    for i in range(0, num_ids):
+        LOG.debug( "Ad: %d " %  i )
+        num_ids_bs = BitStructureExt('NUM_ID')
+        num_ids_bs.append(BitFieldExt('idType',        BYTE_SIZE * 1    ))
+        num_ids_bs.append(BitFieldExt('id_length',    BYTE_SIZE * 1    ))
+        num_ids_bs.append(BitFieldExt('id_bytes',    BYTE_SIZE * 4    ))
+        bs_input.field('SUBST_AD_DESC').append(num_ids_bs)
 
     bs_input.set_array(data)
 
@@ -421,50 +455,48 @@ def parse_DESCRIPTORS ( bs_input , data, bytes_to_read , desc_number):
 
     if (bytes_to_read <= 0):
         LOG.debug( "parse_DESCRIPTORS: finished" )
-        return -1;
+        return -1
 
     desc_tag_name = 'descriptor_tag' + str(desc_number)
     bs_input.append(BitFieldExt(desc_tag_name, BYTE_SIZE * 1))
-    LOG.debug( "bytes_to_read: " + str( bytes_to_read ))
-    bytes_to_read - 2
     LOG.debug( "bytes_to_read: " + str( bytes_to_read ))
     bs_input.set_array(data)
 
     test = int(bs_input[desc_tag_name])
     if (test==5):
         # parse Desciptor
-        bytes_to_read = parse_SYNC_EVENT_DESC(bs_input,data,bytes_to_read)
+        bytes_to_read = parse_SYNC_EVENT_DESC(bs_input, data, bytes_to_read)
         # parse next descriptor
-        parse_DESCRIPTORS(bs_input,data,bytes_to_read, desc_number + 1)
+        parse_DESCRIPTORS(bs_input, data, bytes_to_read, desc_number + 1)
     elif (test==0x80):
         # parse Desciptor
         # call parse_DESCRIPTORS
         LOG.critical ( "PCR_OFFSET_DESC isn't supported yet" )
     elif (test==0x81):
         # parse Desciptor
-        bytes_to_read = parse_SPLICE_EVENT_DESC(bs_input,data,bytes_to_read)
+        bytes_to_read = parse_SPLICE_EVENT_DESC(bs_input, data, bytes_to_read)
         # parse next descriptor
-        parse_DESCRIPTORS(bs_input,data,bytes_to_read, desc_number + 1)
+        parse_DESCRIPTORS(bs_input, data, bytes_to_read, desc_number + 1)
     elif (test==0x82):
         # parse Desciptor
-        bytes_to_read = parse_SUBST_AD_DESC(bs_input,data,bytes_to_read)
+        bytes_to_read = parse_SUBST_AD_DESC(bs_input, data, bytes_to_read)
         # parse next descriptor
-        parse_DESCRIPTORS(bs_input,data,bytes_to_read, desc_number + 1)
+        parse_DESCRIPTORS(bs_input, data, bytes_to_read, desc_number + 1)
     else:
-        LOG.critical ("parse_DESCRIPTORS: no such decriptor: "+str( test ))
+        LOG.critical ("parse_DESCRIPTORS: no such decriptor: " + str( test ))
         LOG.debug( bs_input )
         return -1
 
 def parse_RULES_PAYLOAD( bs_input , data, bytes_to_read):
 
     rule_payload = BitStructureExt('RULES_PAYLOAD')
-    rule_payload.append(BitFieldExt('version',     BIT_SIZE * 4    ))
-    rule_payload.append(BitFieldExt('availType',    BIT_SIZE * 4    ))
-    rule_payload.append(BitFieldExt('expiryDate',    BIT_SIZE * 40    ))
-    rule_payload.append(BitFieldExt('numSpots',    BIT_SIZE * 8    ))
+    rule_payload.append(BitFieldExt('version',    BIT_SIZE * 4    ))
+    rule_payload.append(BitFieldExt('availType',  BIT_SIZE * 4    ))
+    rule_payload.append(BitFieldExt('expiryDate', BIT_SIZE * 40   ))
+    rule_payload.append(BitFieldExt('numSpots',   BIT_SIZE * 8    ))
     bs_input.append(rule_payload)
 
-    LOG.debug (DVB_MJD_to_string(rule_payload.field('expiryDate'), None ))
+    LOG.debug (dvb_mjd_to_string(rule_payload.field('expiryDate'), None ))
 
     bs_input.set_array(data)
     numSpots = rule_payload.field('numSpots').value()
@@ -472,33 +504,33 @@ def parse_RULES_PAYLOAD( bs_input , data, bytes_to_read):
 
     for i in range(0, numSpots):
         spot = BitStructureExt('SPOT_'+str(i))
-        spot.append(BitFieldExt('spotIdFlag',        BIT_SIZE * 1    ))
-        spot.append(BitFieldExt('reserved',         BIT_SIZE * 7    ))
+        spot.append(BitFieldExt('spotIdFlag', BIT_SIZE * 1 ))
+        spot.append(BitFieldExt('reserved',   BIT_SIZE * 7 ))
 
         bs_input.field('RULES_PAYLOAD').append(spot)
         bs_input.set_array(data)
 
         LOG.debug("spotIdFlag: "+str(spot['spotIdFlag'] ))
         if (spot['spotIdFlag']):
-            spot.append(BitFieldExt('spotId',         BIT_SIZE * 32    ))
+            spot.append(BitFieldExt('spotId', BIT_SIZE * 32 ))
         else:
             LOG.debug(" NO spotId for this spot")
 
-        spot.append(BitFieldExt('numSubstitutions',BIT_SIZE * 8    ))
+        spot.append(BitFieldExt('numSubstitutions', BIT_SIZE * 8 ))
         bs_input.set_array(data)
 
         numSubstitutions = spot['numSubstitutions']
         LOG.debug( "numSubstitutions: "+ str(numSubstitutions) )
         for j in range(0, numSubstitutions):
             sub = BitStructureExt('SUBSTITUTION_'+str(j))
-            sub.append(BitFieldExt('ruleStartDate',    BIT_SIZE * 40    ))
-            sub.append(BitFieldExt('ruleEndDate',        BIT_SIZE * 40    ))
+            sub.append(BitFieldExt('ruleStartDate',    BIT_SIZE * 40   ))
+            sub.append(BitFieldExt('ruleEndDate',      BIT_SIZE * 40   ))
             sub.append(BitFieldExt('profileLength',    BIT_SIZE * 8    ))
             spot.append(sub)
 
             bs_input.set_array(data)
-            sub.field('ruleStartDate').desc     = DVB_MJD_to_string(sub.field('ruleStartDate'), None)
-            sub.field('ruleEndDate').desc         = DVB_MJD_to_string(sub.field('ruleEndDate'),     None)
+            sub.field('ruleStartDate').desc     = dvb_mjd_to_string(sub.field('ruleStartDate'), None)
+            sub.field('ruleEndDate').desc         = dvb_mjd_to_string(sub.field('ruleEndDate'),     None)
             profileLength = sub['profileLength']
             if (profileLength > 0):
                 sub.append(BitFieldExt('profileByte',    BYTE_SIZE * profileLength))
@@ -515,47 +547,12 @@ def parse_RULES_PAYLOAD( bs_input , data, bytes_to_read):
             LOG.debug( "numAds: "+ str(numAds) )
             for k in range(0, numAds):
                 ad = BitStructureExt('AD_'+str(k))
-                ad.append(BitFieldExt('reserved',    BIT_SIZE * 1    ))
-                ad.append(BitFieldExt('indirectID',BIT_SIZE * 7    ))
-                ad.append(BitFieldExt('adID',        BIT_SIZE * 32    ))
-                ad.append(BitFieldExt('duration',    BIT_SIZE * 16    ))
+                ad.append(BitFieldExt('reserved',   BIT_SIZE * 1  ))
+                ad.append(BitFieldExt('indirectID', BIT_SIZE * 7  ))
+                ad.append(BitFieldExt('adID',       BIT_SIZE * 32 ))
+                ad.append(BitFieldExt('duration',   BIT_SIZE * 16 ))
                 sub.append(ad)
                 bs_input.set_array(data)
-"""
-
-Substitute_rules_Payload() {
-    version    4
-    availType    4
-    expiryDate    40
-    numSpots    8
-    for(int i=0; i<numSpots; i++) {
-        spotIdFlag    1
-        reserved    7
-        if(spotIdFlag==1) {
-            spotId    32
-        }
-        numSubstitutions    8
-        for(int j=0; j<numSubstitutions; j++) {
-            rule {
-                ruleStartDate    40
-                ruleEndDate    40
-                profileLength    8
-                for(int p=0; p<profileLength; p++) {
-                    profileByte    8
-                }
-            }
-            numAds    8
-            for(int n=0; n<numAds; n++) {
-                reserved    7
-                indirectID    1
-                adID    32
-                duration    16
-            }
-        }
-    }
-}
-
-"""
 
 def ProfileByte_to_string ( profileByte , length , data=None):
     '''
@@ -717,18 +714,18 @@ class BitGamesTest(unittest.TestCase):
         print bs
     def testMJD_UTC_Convertion(self):
         #test mjd + utc convertion
-        test_data = array.array('B',hex_to_byte("D641 10 29 40"))
-        res = DVB_MJD_to_string(None ,  test_data )
+        test_data = array.array('B', hex_to_byte("D641 10 29 40"))
+        res = dvb_mjd_to_string(None ,  test_data )
         self.assertEqual( "18/1/2009 10:29:40 ", str(res))
 
         #unlimited
-        test_data = array.array('B',hex_to_byte("FFFFFFFFFF"))
-        res = DVB_MJD_to_string(None ,  test_data )
+        test_data = array.array('B', hex_to_byte("FFFFFFFFFF"))
+        res = dvb_mjd_to_string(None ,  test_data )
         self.assertEqual( "Unlimited", str(res))
 
         #wrong size
-        test_data = array.array('B',hex_to_byte("FFFFFFFF"))
-        res = DVB_MJD_to_string(None ,  test_data )
+        test_data = array.array('B', hex_to_byte("FFFFFFFF"))
+        res = dvb_mjd_to_string(None ,  test_data )
         self.assertEqual( "Didn't parse", str(res))
 
     def testProfileByte_Convertion(self):
