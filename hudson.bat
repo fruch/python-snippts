@@ -1,7 +1,10 @@
-easy_install BitVector
-easy_install BitPacket
+pip install BitVector
+pip install BitPacket
+pip install pylint
+pip install coverage
 
-python26 bitgames.py -t
+coverage run bitgames.py -t
+coverage xml
 echo %ERRORLEVEL%
 python26 run_pylint.py
 echo %ERRORLEVEL%
