@@ -1,7 +1,7 @@
 from Cheetah.Template import Template
 import re
 import os
-
+#TODO: switch to MAKO
 
 def readConfigFiles(settings_path):
     from configobj import ConfigObj
