@@ -47,6 +47,7 @@ def parseIntoScriptList(input_files):
 def useTemplates(script_list, output_files):
     for entry in output_files: 
         output = Template(entry["template"], searchList=[{'script_list' : script_list}])
+        import pdb; pdb.set_trace()
         f = open(entry["filename"],"w+")
         f.write(str(output))
         f.close()

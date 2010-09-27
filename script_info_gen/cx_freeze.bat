@@ -1,1 +1,0 @@
-c:\Python25\Scripts\freeze.bat script_info_gen.py --include-modules="encodings.ascii,Cheetah.DummyTransaction"
