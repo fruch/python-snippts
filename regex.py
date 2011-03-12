@@ -1,4 +1,5 @@
-import re, mmap
+import re
+import mmap
 import os
 import time
 '''Trying out regex on mmap files'''
