@@ -1,6 +1,6 @@
 import csv
 
-csvfile = open("tali.csv", "r")
+csv_file = open("tali.csv", "r")
 reader = csv.reader( csvfile, delimiter=',', quotechar='"')
 contacts = {}
 
@@ -26,8 +26,9 @@ row_fmt = '"","%(name)s","","","","","","","","","","","%(phone1)s","%(phone2)s"
 out.write(title +"\n")
 for a in contacts:
     l = list (set(contacts[a]))
-    row = { 'name': a, 'phone1':l[0] , 
-            'phone2': '' if (len(l) < 2) else l[1] , 
-            'phone3': '' if (len(l) < 3) else l[2]}
+    row = dict(name=a,
+               phone1=l[0],
+               phone2='' if (len(l) < 2) else l[1],
+               phone3='' if (len(l) < 3) else l[2])
     out.write( row_fmt %  row + "\n")
 print contacts["Voice Mail"]

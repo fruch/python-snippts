@@ -13,7 +13,7 @@ def readConfigFiles(settings_path):
     
     #read  input filenames
     input_path = config['input_path']
-    input_files = [input_path + x for x in config['input_files']]
+    input_files = ["%s%s" % (input_path, x) for x in config['input_files']]
 
     #read output files and templates
     lines = config['output_files']
@@ -26,21 +26,22 @@ def readConfigFiles(settings_path):
 def parseIntoScriptList(input_files):
     script_list = []
     
-    regex_for_test = '/\*(?P<doc>.*?[^\*/])\*/.*?XSTATUS\s*(?P<func>.*?[^(])\(.*?SCRIPT_NAME\("(?P<name>.*?[^"])".*?return'
+    regexp_for_test = '/\*(?P<doc>.*?[^\*/])\*/.*?XSTATUS\s*(?P<func>.*?[^(])\(.*?SCRIPT_NAME\("(?P<name>.*?[^"])".*?return'
 
     for filename in input_files:
         lines = open(filename).read()
-        print "prossessing ", filename
-        regex = re.compile(regex_for_test, re.MULTILINE | re.DOTALL)
-        res = regex.finditer(lines)
-        if (res != None):
+        print "processing ", filename
+        regexp = re.compile(regexp_for_test, re.MULTILINE | re.DOTALL)
+        res = regexp.finditer(lines)
+        if res is not None:
             for match in res:
-                script_list.append({"name":str(match.group("name")),
-                                    "subject":str(os.path.basename(filename)), 
-                                    "estimated":0, 
-                                    "func":str(match.group("func")),
-                                    "doc":str(match.group("doc"))
-                                    })
+                script_list.append(
+                        dict(name=str(match.group("name")),
+                             subject=str(os.path.basename(filename)),
+                             estimated=0,
+                             func=str(match.group("func")),
+                             doc=str(match.group("doc")))
+                        )
     return script_list
                     
 

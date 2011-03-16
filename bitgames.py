@@ -50,7 +50,7 @@ class BitStructureExt(BitStructure):
         '''
         output = ''
         output += ' ' * indent
-        if (self.desc != None):
+        if self.desc is not None:
             output += '<BitStructure name="%s" desc="%s"' % (self._name, self.desc)
         else:
             output += '<BitStructure name="%s"' % self._name
@@ -68,7 +68,7 @@ class BitStructureExt(BitStructure):
         '''
         output = ''
         output += ' ' * indent
-        if (self.desc != None):
+        if self.desc is not None:
             output += '(%s = - %s -' % (self._name, self.desc)
         else:
             output += '(%s = ' % self._name
@@ -89,7 +89,7 @@ class BitFieldExt(BitField):
         '''
         output = ''
         output += ' ' * indent
-        if (self.desc != None):
+        if self.desc is not None:
             output += '<BitField name="%s"  value="0x%X" desc="%s" />' % (self._name, self.value(), self.desc)
         else:
             output += '<BitField name="%s"  value="0x%X" />' % (self._name, self.value())
@@ -102,7 +102,7 @@ class BitFieldExt(BitField):
         '''
         output = ""
         output += ' ' * indent
-        if (self.desc != None):
+        if self.desc is not None:
             output += "(%s = 0x%X) - %s -" % (self._name, self.value(), self.desc)
         else:
             output += "(%s = 0x%X)" % (self._name, self.value())
@@ -163,16 +163,16 @@ def dvb_mjd_to_string( bit_structure=None , byte_array=None ):
     '''
 
 
-    if (byte_array == None):
+    if byte_array is None:
         byte_array = array.array('B', bit_structure.array())
 
-    if (len(byte_array) != 5):
+    if len(byte_array) != 5:
         LOG.error("No a DVB MJD: size is not 5 bytes")
         return "Didn't parse"
-    elif (byte_to_hex(byte_array.tostring()) == "FF FF FF FF FF"):
+    elif byte_to_hex(byte_array.tostring()) == "FF FF FF FF FF":
         LOG.error("No a DVB MJD: 0xFFFFFFFFFF")
         return "Unlimited"
-    elif (byte_to_hex(byte_array.tostring()) == "00 00 00 00 00"):
+    elif byte_to_hex(byte_array.tostring()) == "00 00 00 00 00":
         LOG.error("No a DVB MJD: 0x0000000000")
         return "None"
 
@@ -191,7 +191,7 @@ def dvb_mjd_to_string( bit_structure=None , byte_array=None ):
     m_tag = int( (int (number) - 14956.1 - int (y_tag * 365.25) ) / 30.6001 )
     d = int(number) - 14956 - int (y_tag * 365.25) - int (m_tag * 30.6001 )
 
-    if ((m_tag == 14) or (m_tag == 15)):
+    if (m_tag == 14) or (m_tag == 15):
         k = 1
     else:
         k = 0
@@ -236,7 +236,7 @@ def parse_PES_START_INFO ( bs_input , data):
     bs_input.append(flags)
     bs_input.set_array(data)
 
-    if (bs_input.field('PES_HEADER_FLAGS').field('PTS_DTS_flags').value() == 0x2):
+    if bs_input.field('PES_HEADER_FLAGS').field('PTS_DTS_flags').value() == 0x2:
         bs_input.append(BitFieldExt('PES_HEADER_PTS_Length', BYTE_SIZE * 1))
 
         pts = BitStructureExt('PES_HEADER_PTS')
@@ -313,7 +313,7 @@ Substitute_rules_Payload() {
     LOG.debug("desc_loop_length : " + str( bs_input['desc_loop_length']))
 
     test = int(bs_input['desc_loop_length'])
-    if (test > 0):
+    if test > 0:
         #bs_input.append(BitFieldExt('descriptors', BYTE_SIZE * test ))
         parse_DESCRIPTORS(bs_input, data, test , 0)
     else:
@@ -323,12 +323,12 @@ Substitute_rules_Payload() {
     bs_input.set_array(data)
 
     test = int(bs_input['rules_loop_length'])
-    if (test > 0):
+    if test > 0:
         # bs_input.append(BitFieldExt('rules', BYTE_SIZE * test ))
         parse_RULES_PAYLOAD(bs_input, data, test)
     else:
         LOG.debug( "parse_SAD_PAYLOAD: No rules" )
-    if (bs_input.field('SAD_FLAGS').field('CRC_flag').value() == 0x1):
+    if bs_input.field('SAD_FLAGS').field('CRC_flag').value() == 0x1:
         bs_input.append(BitFieldExt('CRC_32', BYTE_SIZE * 8))
         # TODO: actully test the CRC
         bs_input.set_array(data)
@@ -356,7 +356,7 @@ def parse_SYNC_EVENT_DESC( bs_input , data, bytes_to_read):
 
     #    Check if this desc. has data in it, and take it
     sync_event_data_length = bs_input.field('SYNC_EVENT_DESC').field('sync_event_data_length').value()
-    if (sync_event_data_length > 0):
+    if sync_event_data_length > 0:
         bs_input.field('SYNC_EVENT_DESC').append(
             BitFieldExt('sync_event_data_byte',     sync_event_data_length))
 
@@ -387,7 +387,7 @@ def parse_SPLICE_EVENT_DESC( bs_input , data, bytes_to_read):
 
     #    Check if this desc. has data in it, and take it
     splice_event_data_length = bs_input.field('SPLICE_EVENT_DESC').field('splice_event_data_length').value()
-    if (splice_event_data_length > 0):
+    if splice_event_data_length > 0:
         bs_input.field('SPLICE_EVENT_DESC').append(
             BitFieldExt('splice_event_data_byte',     splice_event_data_length))
 
@@ -412,7 +412,7 @@ def parse_SUBST_AD_DESC( bs_input , data, bytes_to_read):
 
     out_point = bs_input.field('SUBST_AD_DESC').field('outPoint').value()
 
-    if(out_point):
+    if out_point:
         desc.append(BitFieldExt('auto_return',        BIT_SIZE * 1 ))
         desc.append(BitFieldExt('durationFlag',    BIT_SIZE * 1 ))
         desc.append(BitFieldExt('duration_format',    BIT_SIZE * 6 ))
@@ -421,7 +421,7 @@ def parse_SUBST_AD_DESC( bs_input , data, bytes_to_read):
         auto_return = bs_input.field('SUBST_AD_DESC').field('auto_return').value()
         durationFlag = bs_input.field('SUBST_AD_DESC').field('durationFlag').value()
 
-        if(auto_return & durationFlag):
+        if auto_return & durationFlag:
             desc.append(BitFieldExt('duration',    BYTE_SIZE * 4 ))
         else:
             LOG.debug( "parse_SUBST_AD_DESC: NO duration" )
