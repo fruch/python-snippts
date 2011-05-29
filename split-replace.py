@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, sys,shutil, re
 
-mydir= 'C:\python-snippts'
+mydir= 'C:\Users\Fruch\GitHub\python-snippts\split-replace.py'
 
 # find and replace in a dir by multiple pairs of regex
 
