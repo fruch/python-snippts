@@ -1,7 +1,7 @@
-from Cheetah.Template import Template
+#from Cheetah.Template import Template
 import re
 import os
-#TODO: switch to MAKO
+from mako.template import Template
 
 def readConfigFiles(settings_path):
     from configobj import ConfigObj
@@ -46,8 +46,7 @@ def parseIntoScriptList(input_files):
 
 def useTemplates(script_list, output_files):
     for entry in output_files: 
-        output = Template(entry["template"], searchList=[{'script_list' : script_list}])
-        import pdb; pdb.set_trace()
+        output = Template(entry["template"]).render(script_list=script_list)
         f = open(entry["filename"],"w+")
         f.write(str(output))
         f.close()
