@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+{% block body %}
+    <form action="{{ url_for('edit_resource', resource_key=item.id) }}" method=post>
+        {{ form.render()|safe }}
+        <input type=submit value="Edit">
+    </form>
+{% endblock %}

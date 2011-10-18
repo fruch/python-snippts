@@ -4,7 +4,8 @@ Base = declarative_base()
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-import HTML
+
+class ResourceBusy(Exception): pass
 
 class ObjectPool:
     """ Resource manager."""
@@ -17,24 +18,30 @@ class ObjectPool:
     def addResource(self, resource):
         try:
             self.session.add(resource)
+            platform = self.session.query(Platform).filter_by(name=resource.type).first()
+            if not platform:
+                p = Platform(name=resource.type)
+                self.session.add(p)
             self.session.commit()
-        except IntegrityError as e:
+        except IntegrityError as exp:
             self.session.rollback()
-            raise e
+            raise exp
         
-    def getResource(self, type):
+    def getResource(self, type, taken_by=None):
         res = self.session.query(Resource).filter_by(type=type, in_use=False).first()
         if res:
             res.in_use = True
+            if taken_by: res.taken_by = taken_by
             self.session.commit()
             return res
         else:
-            raise Exception("free resource of type [%s] wasn't found" % type)
+            raise ResourceBusy("Free Resource of type [%s] wasn't found" % type)
     
     def returnResource(self, resource=None, id=None):
         if id is not None:
             resource = self.session.query(Resource).get(id)
         resource.in_use = False
+        resource.taken_by = None
         self.session.commit()
 
     def emptyAllResources(self):
@@ -43,14 +50,35 @@ class ObjectPool:
         for name, table in Base.metadata.tables.items():
             con.execute(table.delete())
         trans.commit()
+        
+    def deleteResource(self, resource=None, id=None):
+        if id is not None:
+            resource = self.session.query(Resource).get(id)
+        self.session.delete(resource)
+        self.session.commit()
 
     def allResourcesGenerator(self):
         for res in self.session.query(Resource):
             yield res
 
+    def getPlatformList(self):
+        for res in self.session.query(Platform):
+            yield res
+
+class Platform(Base):
+    """Hold the possible platfroms"""
+    __tablename__ = 'platforms'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+
+    def __repr__(self):
+        return "<Platform ('%s')>" % self.name
+
 class Resource(Base):
     """Hold the information of an STB"""
     __tablename__ = 'resources'
+    #__table__ = None # for pylint issues
+
     id = Column(Integer, primary_key=True)
     type = Column(String)
     ip_address = Column(String, unique=True)
@@ -58,13 +86,14 @@ class Resource(Base):
 
     avds_server = Column(String)
     rpc_ip_address = Column(String)
-    
+    mac_address = Column(String)
+    NDS_barcode = Column(String)
     in_use = Column(Boolean)
-
-    def __init__(self, type, ip_address):
+    taken_by = Column(String)
+    
+    def __init__(self, type="", ip_address=""):
         self.type = type
         self.ip_address = ip_address
-        self.in_use = False
 
     def __repr__(self):
         return "<STB ('%s','%s', '%s')>" % (self.type, self.ip_address, self.location)
@@ -104,19 +133,11 @@ class TestPool(unittest.TestCase):
     def test_04_check_unique(self):
         self.assertRaises(IntegrityError, self.pool.addResource, (Resource("UPC", "10.64.62.111")))
 
-    def test_05_print_all_resources(self):
+    def test_05_platfroms(self):
+        self.assertEqual("[<Platform ('GPVR')>, <Platform ('UPC')>]",
+                        str([i for i in self.pool.getPlatformList()]))
 
-        keys = []
-        for c in Base.metadata.tables[Resource.__tablename__].c:
-            keys += [c.key]
-        t = HTML.Table(header_row=keys)
-
-        for r in self.pool.allResourcesGenerator():
-            t.rows.append([r.__dict__[key] for key in keys])
-
-        print str(t)
-
-def main():
+def main(): # pragma: no cover
     pool = ObjectPool()
     # TODO: load all resources from config file
     # TODO: make a better option parser
@@ -134,4 +155,4 @@ def main():
     pool.returnResource(a)
 
 if __name__ == "__main__":
-    main()
+    main() # pragma: no cover

@@ -3,18 +3,20 @@ import time
 import urllib2
 import json
 
-base_url="http://localhost:1234/resource/"
+base_url="http://localhost:5000/"
+
 def http_request(path):
     req  = urllib2.Request(base_url + path)
     req.add_header('Accept', 'application/json')
     r = urllib2.urlopen(req).read()
-    return json.loads(r)
+    return r
 
-def getResource(type, timeout=10, id=None):
+def retrieveResource(type, timeout=10, id=None):
+    ''' Retrieve Resource with retry and timeout '''
     if timeout is None:
         timeout = sys.maxint
     for i in xrange(timeout/5):
-        req = http_request("get/%s" % type)
+        req = json.loads( http_request("retrieve/%s" % type) )
         if req['id'] is not None:
             return req
         time.sleep(5)
@@ -24,9 +26,9 @@ def returnResource(id):
     return http_request("return/%s" % id)
 
 
-GW = getResource("UPC")
+GW = retrieveResource("UPC")
 print GW
-CLIENT = getResource("GPVR")
+CLIENT = retrieveResource("GPVR")
 print CLIENT
 print returnResource(GW['id'])
 print returnResource(CLIENT['id'])

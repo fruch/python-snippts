@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block body %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // confirm on deletion
+    $('a.delete').confirm();
+});
+</script>
+        
+
+<a href="{{ url_for('add_resource') }}">Add</a>
+    <table id="resources">
+        {{ grid.render()|safe }}
+    </table>
+<!--
+<table id="resources">
+    {% for key in keys %}
+    <th>{{key}}</th>
+    {% endfor %}
+    {% for item in items %}
+    <tr>
+        {% for values in item %}
+        <td>{{values}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>-->
+
+{% endblock %}

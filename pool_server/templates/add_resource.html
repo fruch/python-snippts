@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <script type="text/javascript">
+        $.getJSON('platform_list', function(data) {
+            $('#Resource--type').combobox(data.platforms)
+        });
+    </script>
+    <form action="{{ url_for('add_resource') }}" method=post>
+        {{ form.render()|safe }}
+        <input type=submit value="Add">
+    </form>
+{% endblock %}
