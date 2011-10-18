@@ -1,0 +1,21 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:py="http://genshi.edgewall.org/">
+    
+    <head>
+        <title>QuiltyCenter Importer Server</title>
+    </head>
+    
+    <body class="index">
+    <div id="header">
+      <h1>QuiltyCenter Importer Server</h1>
+    </div>
+    <div id="container"> 
+        <p>
+        Job:${job.id} <br/>
+        status=${job.status}  <br/>
+        Created at ${job.time.strftime('%x %X')}  <br/>
+        </p>
+        <a href="/delete?job_id=${job.status}">delete</a>
+    </div>
+    </body>
+</html>
